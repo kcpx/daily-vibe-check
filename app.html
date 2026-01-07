@@ -520,6 +520,27 @@
                     </select>
                 </div>
 
+                <!-- Weekly Digest Option -->
+                <div class="mt-5 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20">
+                    <label class="flex items-start space-x-3 cursor-pointer">
+                        <input type="checkbox" id="weekly-digest" class="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-offset-0">
+                        <div class="flex-1">
+                            <span class="font-medium text-sm">Weekly Digest</span>
+                            <p class="text-xs text-slate-400 mt-1">Get a Sunday summary of your week's emotional patterns.</p>
+                        </div>
+                    </label>
+
+                    <!-- Digest Preview -->
+                    <div id="digest-preview" class="mt-3 p-3 rounded-lg bg-slate-800/50 text-xs hidden">
+                        <p class="text-slate-500 mb-2">Preview of what you'll receive:</p>
+                        <div class="bg-slate-900/50 rounded-lg p-3 space-y-2">
+                            <p class="text-slate-300">"Your week was <span class="text-orange-400 font-medium">60% warm colors</span> - high energy! 🔥"</p>
+                            <p class="text-slate-400">Top mood: <span class="text-indigo-400">Indigo</span> (3 days)</p>
+                            <p class="text-slate-400">Streak: 7 days 🎯</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-6 space-y-3">
                     <button onclick="saveReminder()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold">
                         Enable Reminders
@@ -1532,15 +1553,114 @@
         function openReminderModal() {
             document.getElementById('reminder-prompt').classList.add('hidden');
             document.getElementById('reminder-modal').classList.remove('hidden');
+
+            // Setup digest checkbox listener
+            const digestCheckbox = document.getElementById('weekly-digest');
+            const digestPreview = document.getElementById('digest-preview');
+
+            digestCheckbox.onchange = () => {
+                if (digestCheckbox.checked) {
+                    digestPreview.classList.remove('hidden');
+                    updateDigestPreview();
+                } else {
+                    digestPreview.classList.add('hidden');
+                }
+            };
         }
 
         function closeReminderModal() {
             document.getElementById('reminder-modal').classList.add('hidden');
         }
 
+        function updateDigestPreview() {
+            const digest = generateWeeklyDigest();
+            const previewContainer = document.querySelector('#digest-preview .bg-slate-900\\/50');
+            if (!previewContainer || !digest) return;
+
+            previewContainer.innerHTML = `
+                <p class="text-slate-300">"${digest.summary}"</p>
+                <p class="text-slate-400">Top mood: <span class="${digest.topColorClass}">${digest.topColorName}</span> (${digest.topColorCount} days)</p>
+                <p class="text-slate-400">Streak: ${digest.streak} days ${digest.streak >= 7 ? '🎯' : ''}</p>
+            `;
+        }
+
+        function generateWeeklyDigest() {
+            // Get last 7 days of data
+            const today = new Date();
+            const weekData = [];
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                if (vibeData[dateStr]) {
+                    weekData.push({ date: dateStr, color: vibeData[dateStr] });
+                }
+            }
+
+            if (weekData.length === 0) {
+                return {
+                    summary: "Start logging to see your weekly patterns! 🌟",
+                    topColorName: "None yet",
+                    topColorClass: "text-slate-400",
+                    topColorCount: 0,
+                    streak: 0
+                };
+            }
+
+            // Calculate warm/cool percentages
+            let warm = 0, cool = 0, neutral = 0;
+            const colorCounts = {};
+
+            weekData.forEach(({ color }) => {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                const info = COLOR_INSIGHTS[color];
+                if (info?.category === 'warm') warm++;
+                else if (info?.category === 'cool') cool++;
+                else neutral++;
+            });
+
+            const total = weekData.length;
+            const warmPct = Math.round((warm / total) * 100);
+            const coolPct = Math.round((cool / total) * 100);
+
+            // Generate summary message
+            let summary = '';
+            let emoji = '';
+            if (warmPct > 60) {
+                summary = `Your week was ${warmPct}% warm colors - high energy!`;
+                emoji = '🔥';
+            } else if (coolPct > 60) {
+                summary = `Your week was ${coolPct}% cool colors - calm & focused!`;
+                emoji = '💙';
+            } else {
+                summary = `Your week was balanced - ${warmPct}% warm, ${coolPct}% cool!`;
+                emoji = '⚖️';
+            }
+            summary += ' ' + emoji;
+
+            // Find top color
+            const topColor = Object.entries(colorCounts).sort((a, b) => b[1] - a[1])[0];
+            const topColorInfo = COLOR_INSIGHTS[topColor[0]] || { name: 'Unknown', category: 'neutral' };
+            const topColorClass = topColorInfo.category === 'warm' ? 'text-orange-400' :
+                                  topColorInfo.category === 'cool' ? 'text-blue-400' : 'text-slate-400';
+
+            return {
+                summary,
+                topColorName: topColorInfo.name,
+                topColorClass,
+                topColorCount: topColor[1],
+                streak: calculateCurrentStreak(),
+                warmPct,
+                coolPct,
+                daysLogged: total
+            };
+        }
+
         function saveReminder() {
             const time = document.getElementById('reminder-time').value;
             const timeLabel = document.getElementById('reminder-time').options[document.getElementById('reminder-time').selectedIndex].text;
+            const weeklyDigest = document.getElementById('weekly-digest').checked;
 
             const phone = document.getElementById('reminder-phone').value.trim();
             if (!phone || phone.length < 10) {
@@ -1554,6 +1674,7 @@
                 phone: phone,
                 time: time,
                 timeLabel: timeLabel,
+                weeklyDigest: weeklyDigest,
                 createdAt: new Date().toISOString()
             };
 
@@ -1564,6 +1685,13 @@
             closeReminderModal();
 
             document.getElementById('reminder-confirm-time').textContent = timeLabel;
+            // Update success message based on digest selection
+            const successSubtitle = document.querySelector('#reminder-success p.text-sm');
+            if (weeklyDigest) {
+                successSubtitle.innerHTML = `Daily reminder at <span id="reminder-confirm-time">${timeLabel}</span> + weekly digest on Sundays`;
+            } else {
+                successSubtitle.innerHTML = `We'll text you a link daily at <span id="reminder-confirm-time">${timeLabel}</span>`;
+            }
             document.getElementById('reminder-success').classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('reminder-success').classList.add('hidden');
