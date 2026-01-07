@@ -465,14 +465,14 @@
             <div class="flex items-start space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                     </svg>
                 </div>
                 <div class="flex-1 pr-4">
-                    <h4 class="font-semibold text-sm mb-1">Want a daily reminder?</h4>
-                    <p class="text-xs text-slate-400 mb-3">Get a gentle nudge at 9pm to log your vibe.</p>
+                    <h4 class="font-semibold text-sm mb-1">Want a daily text reminder?</h4>
+                    <p class="text-xs text-slate-400 mb-3">We'll text you a link to log your vibe.</p>
                     <button onclick="openReminderModal()" class="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all text-sm font-medium">
-                        Set Up Reminder
+                        Set Up Text Reminder
                     </button>
                 </div>
             </div>
@@ -493,36 +493,19 @@
                 <div class="text-center mb-6">
                     <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
                     </div>
                     <h3 class="text-xl font-semibold mb-1">Daily Reminder</h3>
-                    <p class="text-sm text-slate-400">We'll send you a gentle reminder at 9pm daily.</p>
+                    <p class="text-sm text-slate-400">We'll text you a link to log your vibe.</p>
                 </div>
 
-                <!-- Reminder Type Tabs -->
-                <div class="flex space-x-2 mb-4">
-                    <button id="tab-email" onclick="switchReminderTab('email')" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400">
-                        Email
-                    </button>
-                    <button id="tab-sms" onclick="switchReminderTab('sms')" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white">
-                        SMS
-                    </button>
-                </div>
-
-                <!-- Email Form -->
-                <div id="form-email" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="reminder-email" placeholder="you@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500">
-                    </div>
-                </div>
-
-                <!-- SMS Form -->
-                <div id="form-sms" class="space-y-4 hidden">
+                <!-- Phone Form -->
+                <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Phone Number</label>
                         <input type="tel" id="reminder-phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500">
+                        <p class="text-xs text-slate-500 mt-2">You'll receive a text with a direct link to the app.</p>
                     </div>
                 </div>
 
@@ -556,8 +539,8 @@
                 </svg>
             </div>
             <div>
-                <p class="font-semibold">Reminder set!</p>
-                <p class="text-sm text-slate-400">We'll remind you daily at <span id="reminder-confirm-time">9:00 PM</span></p>
+                <p class="font-semibold">Text reminder set!</p>
+                <p class="text-sm text-slate-400">We'll text you a link daily at <span id="reminder-confirm-time">9:00 PM</span></p>
             </div>
         </div>
     </div>
@@ -1528,8 +1511,6 @@
         }
 
         // Reminder functions
-        let currentReminderTab = 'email';
-
         function checkReminderPrompt() {
             const reminderData = localStorage.getItem('vibe-reminder');
             const reminderDismissed = localStorage.getItem('vibe-reminder-dismissed');
@@ -1557,45 +1538,20 @@
             document.getElementById('reminder-modal').classList.add('hidden');
         }
 
-        function switchReminderTab(tab) {
-            currentReminderTab = tab;
-
-            // Update tab styles
-            document.getElementById('tab-email').className = tab === 'email'
-                ? 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400'
-                : 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white';
-            document.getElementById('tab-sms').className = tab === 'sms'
-                ? 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400'
-                : 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white';
-
-            // Show/hide forms
-            document.getElementById('form-email').classList.toggle('hidden', tab !== 'email');
-            document.getElementById('form-sms').classList.toggle('hidden', tab !== 'sms');
-        }
-
         function saveReminder() {
             const time = document.getElementById('reminder-time').value;
             const timeLabel = document.getElementById('reminder-time').options[document.getElementById('reminder-time').selectedIndex].text;
 
-            let contact = '';
-            if (currentReminderTab === 'email') {
-                contact = document.getElementById('reminder-email').value.trim();
-                if (!contact || !contact.includes('@')) {
-                    showError('Please enter a valid email address');
-                    return;
-                }
-            } else {
-                contact = document.getElementById('reminder-phone').value.trim();
-                if (!contact || contact.length < 10) {
-                    showError('Please enter a valid phone number');
-                    return;
-                }
+            const phone = document.getElementById('reminder-phone').value.trim();
+            if (!phone || phone.length < 10) {
+                showError('Please enter a valid phone number');
+                return;
             }
 
             // Save reminder data
             const reminderData = {
-                type: currentReminderTab,
-                contact: contact,
+                type: 'sms',
+                phone: phone,
                 time: time,
                 timeLabel: timeLabel,
                 createdAt: new Date().toISOString()
