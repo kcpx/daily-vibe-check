@@ -566,6 +566,51 @@
         </div>
     </div>
 
+    <!-- Monthly Reflection Modal -->
+    <div id="reflection-modal" class="hidden fixed inset-0 z-50 modal-overlay">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass rounded-2xl p-6 w-full max-w-md relative modal-content">
+                <button onclick="closeReflectionModal()" class="absolute top-4 right-4 p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center" id="reflection-color-box">
+                        <svg class="w-10 h-10 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Monthly Reflection</h3>
+                    <p class="text-slate-300" id="reflection-summary">Your December was mostly <span class="font-semibold" id="reflection-color-name">Indigo</span>.</p>
+                    <p class="text-slate-400 text-sm mt-1">What happened this month?</p>
+                </div>
+
+                <!-- Previous Month Note (if exists) -->
+                <div id="previous-reflection" class="hidden mb-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                    <p class="text-xs text-slate-500 mb-2">Last <span id="prev-month-name">November</span> you wrote:</p>
+                    <p class="text-sm text-slate-300 italic" id="prev-month-note">"..."</p>
+                </div>
+
+                <div class="mb-6">
+                    <textarea id="reflection-note" placeholder="Take a moment to reflect on your month..." rows="4" maxlength="500" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500 resize-none text-sm"></textarea>
+                    <p class="text-xs text-slate-500 mt-1 text-right"><span id="reflection-char-count">0</span>/500</p>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button onclick="skipReflection()" class="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors font-medium">
+                        Skip
+                    </button>
+                    <button onclick="saveReflection()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-medium">
+                        Save Reflection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Color palette - 18 colors from red to blue to grey
         const COLORS = [
@@ -727,6 +772,7 @@
                 updateTodayPreview();
                 checkFirstTimeUser();
                 updateInsights();
+                checkMonthlyReflection();
 
                 // Reset selection
                 document.querySelectorAll('#color-palette .color-btn').forEach(b => b.classList.remove('selected'));
@@ -976,6 +1022,7 @@
                 updateStreaks();
                 updateTodayPreview();
                 updateInsights();
+                checkMonthlyReflection();
 
                 document.getElementById('success-title').textContent = 'Vibe updated!';
                 document.getElementById('success-subtitle').textContent = noteValue ? 'Note saved' : '';
@@ -1460,6 +1507,170 @@
             setTimeout(() => {
                 document.getElementById('reminder-success').classList.add('hidden');
             }, 4000);
+        }
+
+        // Monthly Reflection functions
+        let monthNotesData = {};
+        let reflectionMonth = null;
+
+        function loadMonthNotes() {
+            try {
+                const stored = localStorage.getItem('month-notes');
+                monthNotesData = stored ? JSON.parse(stored) : {};
+            } catch (e) {
+                monthNotesData = {};
+            }
+        }
+
+        function saveMonthNotes() {
+            try {
+                localStorage.setItem('month-notes', JSON.stringify(monthNotesData));
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function checkMonthlyReflection() {
+            const dataCount = Object.keys(vibeData).length;
+
+            // Only show at 30-day intervals (30, 60, 90, etc.)
+            if (dataCount < 30 || dataCount % 30 !== 0) return;
+
+            // Get the last completed month from the data
+            const sortedDates = Object.keys(vibeData).sort();
+            if (sortedDates.length === 0) return;
+
+            // Find the most recent complete month
+            const lastDate = new Date(sortedDates[sortedDates.length - 1] + 'T00:00:00');
+            const lastMonth = lastDate.getMonth();
+            const lastYear = lastDate.getFullYear();
+
+            // Get previous month (the one we're reflecting on)
+            let reflectMonth = lastMonth - 1;
+            let reflectYear = lastYear;
+            if (reflectMonth < 0) {
+                reflectMonth = 11;
+                reflectYear--;
+            }
+
+            const monthKey = `${reflectYear}-${String(reflectMonth + 1).padStart(2, '0')}`;
+
+            // Check if we already prompted for this month
+            const promptedMonths = localStorage.getItem('reflection-prompted') || '';
+            if (promptedMonths.includes(monthKey)) return;
+
+            // Check if there's data for that month
+            const monthData = Object.entries(vibeData).filter(([dateStr]) =>
+                dateStr.startsWith(monthKey)
+            );
+
+            if (monthData.length < 7) return; // Need at least a week of data
+
+            // Show reflection modal
+            reflectionMonth = monthKey;
+            showReflectionModal(monthKey, monthData);
+        }
+
+        function showReflectionModal(monthKey, monthData) {
+            loadMonthNotes();
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            const [year, month] = monthKey.split('-');
+            const monthName = monthNames[parseInt(month) - 1];
+
+            // Calculate dominant color for the month
+            const colorCounts = {};
+            monthData.forEach(([_, color]) => {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+            });
+
+            const dominantColor = Object.entries(colorCounts).sort((a, b) => b[1] - a[1])[0];
+            const colorInfo = COLOR_INSIGHTS[dominantColor[0]] || { name: 'Unknown', category: 'neutral' };
+
+            // Update modal content
+            document.getElementById('reflection-color-box').style.backgroundColor = dominantColor[0];
+            document.getElementById('reflection-color-name').textContent = colorInfo.name;
+            document.getElementById('reflection-summary').innerHTML =
+                `Your <span class="font-semibold">${monthName}</span> was mostly <span class="font-semibold" style="color: ${dominantColor[0]}">${colorInfo.name}</span>.`;
+
+            // Check for previous month's note
+            let prevMonthKey = getPreviousMonthKey(monthKey);
+            const prevNote = monthNotesData[prevMonthKey];
+
+            if (prevNote) {
+                const [prevYear, prevMonth] = prevMonthKey.split('-');
+                const prevMonthName = monthNames[parseInt(prevMonth) - 1];
+
+                document.getElementById('prev-month-name').textContent = prevMonthName;
+                document.getElementById('prev-month-note').textContent = `"${prevNote}"`;
+                document.getElementById('previous-reflection').classList.remove('hidden');
+            } else {
+                document.getElementById('previous-reflection').classList.add('hidden');
+            }
+
+            // Reset textarea
+            const textarea = document.getElementById('reflection-note');
+            textarea.value = monthNotesData[monthKey] || '';
+            document.getElementById('reflection-char-count').textContent = textarea.value.length;
+
+            // Character counter
+            textarea.oninput = () => {
+                document.getElementById('reflection-char-count').textContent = textarea.value.length;
+            };
+
+            // Show modal after a delay
+            setTimeout(() => {
+                document.getElementById('reflection-modal').classList.remove('hidden');
+            }, 1500);
+        }
+
+        function getPreviousMonthKey(monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            let prevMonth = month - 1;
+            let prevYear = year;
+            if (prevMonth < 1) {
+                prevMonth = 12;
+                prevYear--;
+            }
+            return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+        }
+
+        function closeReflectionModal() {
+            document.getElementById('reflection-modal').classList.add('hidden');
+        }
+
+        function skipReflection() {
+            // Mark as prompted so we don't show again
+            if (reflectionMonth) {
+                const prompted = localStorage.getItem('reflection-prompted') || '';
+                localStorage.setItem('reflection-prompted', prompted + reflectionMonth + ',');
+            }
+            closeReflectionModal();
+        }
+
+        function saveReflection() {
+            if (!reflectionMonth) return;
+
+            const note = document.getElementById('reflection-note').value.trim();
+
+            if (note) {
+                monthNotesData[reflectionMonth] = note;
+                saveMonthNotes();
+            }
+
+            // Mark as prompted
+            const prompted = localStorage.getItem('reflection-prompted') || '';
+            localStorage.setItem('reflection-prompted', prompted + reflectionMonth + ',');
+
+            closeReflectionModal();
+
+            // Show success toast
+            document.getElementById('success-title').textContent = 'Reflection saved!';
+            document.getElementById('success-subtitle').textContent = 'Your thoughts have been recorded.';
+            successToast.classList.remove('hidden');
+            setTimeout(() => successToast.classList.add('hidden'), 3000);
         }
     </script>
 </body>
