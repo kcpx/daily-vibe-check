@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Vibe Check - Track Your Mood with Colors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'gradient': 'gradient 8s ease infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 8s ease infinite;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .demo-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                    <span class="font-bold text-xl">Vibe Check</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#how-it-works" class="text-slate-300 hover:text-white transition-colors hidden sm:block">How It Works</a>
+                    <a href="#features" class="text-slate-300 hover:text-white transition-colors hidden sm:block">Features</a>
+                    <a href="#preview" class="text-slate-300 hover:text-white transition-colors hidden sm:block">Insights</a>
+                    <a href="app.html" class="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-medium">
+                        Start Tracking
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute top-20 left-10 w-72 h-72 bg-purple-600/30 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-10 right-10 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                        One Color. <br>
+                        <span class="gradient-text">One Moment.</span><br>
+                        Every Day.
+                    </h1>
+                    <p class="text-xl text-slate-300 mb-8 max-w-lg mx-auto lg:mx-0">
+                        <span class="text-white font-medium">Visualize your journal, don't write it.</span> Track your emotional journey with a single color each day. After 30 days, discover patterns you never knew existed.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="app.html" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transform hover:-translate-y-0.5">
+                            Start Your Journey
+                        </a>
+                        <a href="#how-it-works" class="px-8 py-4 rounded-xl glass hover:bg-slate-700/50 transition-all font-semibold text-lg">
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Demo Calendar Preview -->
+                <div class="relative animate-float">
+                    <div class="glass rounded-2xl p-6 max-w-md mx-auto">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-slate-200">January 2025</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-slate-400">🔥 12 day streak</span>
+                            </div>
+                        </div>
+                        <div class="demo-calendar" id="demo-calendar">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-20 px-4 relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">How It Works</h2>
+                <p class="text-slate-400 text-lg max-w-2xl mx-auto">Simple, intentional, powerful. Three steps to understanding your emotional patterns.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="glass rounded-2xl p-8 text-center relative group hover:bg-slate-800/50 transition-all">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold mx-auto mb-6">1</div>
+                    <h3 class="text-xl font-semibold mb-3">Pick Your Color</h3>
+                    <p class="text-slate-400">Choose from 18 carefully curated colors that represent how you feel today. No overthinking—just intuition.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="glass rounded-2xl p-8 text-center relative group hover:bg-slate-800/50 transition-all">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl font-bold mx-auto mb-6">2</div>
+                    <h3 class="text-xl font-semibold mb-3">Build Your Streak</h3>
+                    <p class="text-slate-400">Log daily to build streaks. Miss a day? You can still edit yesterday. Watch your consistency grow.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="glass rounded-2xl p-8 text-center relative group hover:bg-slate-800/50 transition-all">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-2xl font-bold mx-auto mb-6">3</div>
+                    <h3 class="text-xl font-semibold mb-3">Discover Patterns</h3>
+                    <p class="text-slate-400">After 30 days, see your emotional journey visualized. Spot trends, understand yourself better.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What You're Building Section -->
+    <section id="preview" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">What You'll Discover</h2>
+                <p class="text-slate-400 text-lg max-w-2xl mx-auto">After 30 days, your calendar transforms into a powerful self-reflection tool with personalized insights.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-start">
+                <!-- Demo Calendar -->
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-lg">Your Month at a Glance</h3>
+                        <span class="text-sm text-slate-400">31 days logged</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4 mb-4">
+                        <div class="grid grid-cols-7 gap-2 mb-2">
+                            <div class="text-center text-xs text-slate-500">S</div>
+                            <div class="text-center text-xs text-slate-500">M</div>
+                            <div class="text-center text-xs text-slate-500">T</div>
+                            <div class="text-center text-xs text-slate-500">W</div>
+                            <div class="text-center text-xs text-slate-500">T</div>
+                            <div class="text-center text-xs text-slate-500">F</div>
+                            <div class="text-center text-xs text-slate-500">S</div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-2" id="preview-calendar">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-400 text-center">Each color tells a story. Together, they reveal your emotional landscape.</p>
+                </div>
+
+                <!-- Insights Panel -->
+                <div class="space-y-4">
+                    <!-- Dominant Mood -->
+                    <div class="glass rounded-xl p-5 hover:bg-slate-800/50 transition-all">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500 flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <h4 class="font-semibold">Dominant Mood</h4>
+                                    <span class="text-xs text-slate-400">26% of days</span>
+                                </div>
+                                <p class="text-sm text-slate-400 mb-2">Indigo appeared 8 times this month</p>
+                                <p class="text-xs text-indigo-400">💡 Indigo often represents creativity, intuition, and deep thinking. You may be in a reflective period.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mood Spectrum -->
+                    <div class="glass rounded-xl p-5 hover:bg-slate-800/50 transition-all">
+                        <h4 class="font-semibold mb-3">Mood Spectrum Analysis</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex items-center justify-between text-sm mb-1">
+                                    <span class="text-slate-400">Warm (Red, Orange, Yellow)</span>
+                                    <span class="text-orange-400">12 days</span>
+                                </div>
+                                <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-full" style="width: 39%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-sm mb-1">
+                                    <span class="text-slate-400">Cool (Green, Blue, Purple)</span>
+                                    <span class="text-blue-400">15 days</span>
+                                </div>
+                                <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-full" style="width: 48%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-sm mb-1">
+                                    <span class="text-slate-400">Neutral (Grey tones)</span>
+                                    <span class="text-slate-400">4 days</span>
+                                </div>
+                                <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-slate-500 to-slate-600 rounded-full" style="width: 13%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-400 mt-3">💡 A cool-dominant month suggests calmness and stability. Great for focused work!</p>
+                    </div>
+
+                    <!-- Weekly Pattern -->
+                    <div class="glass rounded-xl p-5 hover:bg-slate-800/50 transition-all">
+                        <h4 class="font-semibold mb-3">Weekly Patterns</h4>
+                        <div class="grid grid-cols-7 gap-2 mb-3">
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-slate-600 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Sun</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-slate-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Mon</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Tue</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Wed</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-purple-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Thu</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-orange-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Fri</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 rounded-lg bg-yellow-500 mx-auto mb-1"></div>
+                                <span class="text-xs text-slate-500">Sat</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-purple-400">💡 Your mood warms up toward the weekend! Mondays tend to be neutral—consider a morning ritual to shift that.</p>
+                    </div>
+
+                    <!-- Streak & Consistency -->
+                    <div class="glass rounded-xl p-5 hover:bg-slate-800/50 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold">Consistency Score</h4>
+                            <span class="text-2xl font-bold text-green-400">94%</span>
+                        </div>
+                        <div class="flex items-center space-x-4 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-orange-400">🔥</span>
+                                <div>
+                                    <p class="text-sm font-medium">14 Day Streak</p>
+                                    <p class="text-xs text-slate-400">Current</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-purple-400">🏆</span>
+                                <div>
+                                    <p class="text-sm font-medium">21 Days</p>
+                                    <p class="text-xs text-slate-400">Best Ever</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-400">💡 You only missed 2 days this month. Consistent self-reflection builds lasting self-awareness!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-20 px-4 bg-slate-800/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Features</h2>
+                <p class="text-slate-400 text-lg max-w-2xl mx-auto">Everything you need to track your emotional wellbeing, nothing you don't.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-red-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">18 Curated Colors</h3>
+                    <p class="text-slate-400 text-sm">From intense reds to calming blues to neutral greys—express any emotion.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Streak Tracking</h3>
+                    <p class="text-slate-400 text-sm">Build momentum with daily streaks. Celebrate milestones at 7, 14, and 30 days.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Calendar View</h3>
+                    <p class="text-slate-400 text-sm">See your entire month at a glance. Navigate between months to review your journey.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Flexible Editing</h3>
+                    <p class="text-slate-400 text-sm">Forgot to log yesterday? No problem. Edit today or yesterday anytime.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Pattern Insights</h3>
+                    <p class="text-slate-400 text-sm">After 30 days, discover your most-used colors and emotional patterns.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass rounded-xl p-6 hover:bg-slate-800/50 transition-all group">
+                    <div class="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">100% Private</h3>
+                    <p class="text-slate-400 text-sm">All data stored locally on your device. No accounts, no cloud, no tracking.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass rounded-3xl p-12 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
+                    <p class="text-slate-300 text-lg mb-8 max-w-xl mx-auto">One color a day. 30 seconds of reflection. A lifetime of self-discovery.</p>
+                    <a href="app.html" class="inline-block px-10 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transform hover:-translate-y-0.5">
+                        Pick Your First Color
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                        <span class="font-bold text-xl">Vibe Check</span>
+                    </div>
+                    <p class="text-slate-400 text-sm">Track your emotional journey, one color at a time.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a></li>
+                        <li><a href="app.html" class="hover:text-white transition-colors">Get Started</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Connect</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Twitter</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Instagram</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 pt-8 border-t border-slate-800 text-center text-slate-400 text-sm">
+                <p>&copy; 2025 Daily Vibe Check. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Generate demo calendar
+        const demoColors = [
+            '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6',
+            '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#64748b', '#94a3b8',
+            '#22c55e', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f97316',
+            '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#6366f1', '#8b5cf6',
+            '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6'
+        ];
+
+        const demoCalendar = document.getElementById('demo-calendar');
+
+        // Add day labels
+        const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        days.forEach(day => {
+            const label = document.createElement('div');
+            label.className = 'text-xs text-slate-500 text-center py-1';
+            label.textContent = day;
+            demoCalendar.appendChild(label);
+        });
+
+        // Add empty cells for offset (January 2025 starts on Wednesday)
+        for (let i = 0; i < 3; i++) {
+            const empty = document.createElement('div');
+            demoCalendar.appendChild(empty);
+        }
+
+        // Add color cells
+        demoColors.forEach((color, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'w-8 h-8 sm:w-10 sm:h-10 rounded-lg transition-transform hover:scale-110 cursor-pointer';
+            cell.style.backgroundColor = color;
+            cell.style.animationDelay = `${index * 50}ms`;
+            demoCalendar.appendChild(cell);
+        });
+
+        // Generate preview calendar for insights section
+        const previewColors = [
+            '#6366f1', '#8b5cf6', '#ec4899', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+            '#3b82f6', '#6366f1', '#64748b', '#475569', '#6366f1', '#8b5cf6', '#a855f7',
+            '#d946ef', '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#eab308', '#22c55e',
+            '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6',
+            '#6366f1', '#22c55e', '#3b82f6'
+        ];
+
+        const previewCalendar = document.getElementById('preview-calendar');
+
+        // Add empty cells for offset (starts on Wednesday)
+        for (let i = 0; i < 3; i++) {
+            const empty = document.createElement('div');
+            previewCalendar.appendChild(empty);
+        }
+
+        // Add color cells
+        previewColors.forEach((color) => {
+            const cell = document.createElement('div');
+            cell.className = 'aspect-square rounded-lg transition-transform hover:scale-105';
+            cell.style.backgroundColor = color;
+            previewCalendar.appendChild(cell);
+        });
+    </script>
+</body>
+</html>

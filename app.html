@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Vibe Check - App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'bounce-in': 'bounceIn 0.5s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-ring': 'pulseRing 2s ease-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .color-btn {
+            transition: all 0.2s ease;
+        }
+        .color-btn:hover {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+        .color-btn.selected {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 3px white, 0 0 20px rgba(255,255,255,0.3);
+        }
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover:not(.empty):not(.future) {
+            transform: scale(1.1);
+        }
+        .calendar-day.today {
+            animation: pulseRing 2s ease-out infinite;
+        }
+        .modal-overlay {
+            animation: fadeIn 0.2s ease-out;
+        }
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+        .success-toast {
+            animation: slideUp 0.3s ease-out;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="index.html" class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                    <span class="font-bold text-xl">Vibe Check</span>
+                </a>
+                <div class="flex items-center space-x-4">
+                    <button onclick="scrollToDemo()" class="text-slate-300 hover:text-white transition-colors text-sm sm:text-base">
+                        What You're Building
+                    </button>
+                    <a href="index.html" class="text-slate-300 hover:text-white transition-colors hidden sm:block">
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="hidden fixed top-16 left-0 right-0 z-40 bg-red-500/90 backdrop-blur-sm px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <span id="error-message" class="text-sm font-medium"></span>
+            <button onclick="dismissError()" class="p-1 hover:bg-red-600 rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Offline Banner -->
+    <div id="offline-banner" class="hidden fixed top-16 left-0 right-0 z-40 bg-yellow-500/90 backdrop-blur-sm px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3"></path>
+            </svg>
+            <span class="text-sm font-medium text-slate-900">You're offline. Changes will be saved locally.</span>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-full border-4 border-slate-700 border-t-indigo-500 animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading your vibes...</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- Success Toast -->
+            <div id="success-toast" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 success-toast">
+                <div class="glass rounded-xl px-6 py-4 flex items-center space-x-3 shadow-xl">
+                    <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold" id="success-title">Vibe logged!</p>
+                        <p class="text-sm text-slate-400" id="success-subtitle"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streak Display -->
+            <div class="glass rounded-2xl p-6 mb-8">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">
+                            <span id="greeting">Good morning</span>, <span class="gradient-text">let's vibe</span>
+                        </h2>
+                        <p class="text-slate-400 mt-1" id="date-display"></p>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-orange-400" id="current-streak">0</p>
+                            <p class="text-xs text-slate-400">Current Streak</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-purple-400" id="best-streak">0</p>
+                            <p class="text-xs text-slate-400">Best Streak</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Milestone Message -->
+                <div id="milestone-message" class="hidden mt-4 p-3 rounded-lg bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30">
+                    <p class="text-sm font-medium text-center" id="milestone-text"></p>
+                </div>
+            </div>
+
+            <!-- Color Picker Section -->
+            <div class="glass rounded-2xl p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">How are you feeling today?</h3>
+                    <div id="today-color-preview" class="hidden">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-slate-400">Today's vibe:</span>
+                            <div id="today-preview-color" class="w-8 h-8 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-6 sm:grid-cols-9 gap-3 mb-6" id="color-palette">
+                    <!-- Colors will be generated by JS -->
+                </div>
+
+                <button id="save-btn" onclick="saveToday()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold text-lg" disabled>
+                    Select a color to save
+                </button>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="glass rounded-2xl p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="prevMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h3 class="text-xl font-semibold" id="calendar-month"></h3>
+                    <button onclick="nextMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Day Labels -->
+                <div class="grid grid-cols-7 gap-2 mb-2">
+                    <div class="text-center text-sm text-slate-500 py-2">Sun</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Mon</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Tue</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Wed</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Thu</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Fri</div>
+                    <div class="text-center text-sm text-slate-500 py-2">Sat</div>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-2" id="calendar-grid">
+                    <!-- Generated by JS -->
+                </div>
+
+                <!-- Helper Text -->
+                <p class="text-xs text-slate-500 text-center mt-4">
+                    <span class="inline-flex items-center">
+                        <span class="w-2 h-2 bg-white rounded-full mr-1 opacity-80"></span>
+                        Click any day to add context
+                    </span>
+                </p>
+
+                <!-- Empty State -->
+                <div id="calendar-empty-state" class="hidden py-12 text-center">
+                    <div class="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2">Pick your first color</h4>
+                    <p class="text-slate-400 text-sm">Start your emotional journey by selecting a color above</p>
+                </div>
+            </div>
+
+            <!-- First Time User State -->
+            <div id="first-time-state" class="hidden glass rounded-2xl p-8 mb-8 text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold mb-3">Start Your Journey</h3>
+                <p class="text-slate-400 max-w-md mx-auto mb-6">Welcome to Daily Vibe Check! Pick a color above that represents how you're feeling today. After 30 days, you'll unlock powerful insights about your emotional patterns.</p>
+                <div class="flex items-center justify-center space-x-2 text-sm text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Tip: Go with your gut—there's no wrong answer!</span>
+                </div>
+            </div>
+
+            <!-- Insights Preview Section -->
+            <div id="demo-section" class="glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Your Insights</h3>
+                    <a href="index.html#preview" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">See full preview →</a>
+                </div>
+
+                <div id="insights-content">
+                    <!-- Will show real insights when user has data, or preview when empty -->
+                </div>
+
+                <!-- Empty state for new users -->
+                <div id="insights-empty" class="text-center py-8">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2">Insights Coming Soon</h4>
+                    <p class="text-slate-400 text-sm mb-4 max-w-sm mx-auto">Log at least 7 days to start seeing patterns in your emotional journey.</p>
+                    <div class="flex items-center justify-center space-x-1 text-xs text-slate-500">
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <div class="progress-dot w-2 h-2 rounded-full bg-slate-600"></div>
+                        <span class="ml-2">0 of 7 days</span>
+                    </div>
+                </div>
+
+                <!-- Real insights (shown when user has enough data) -->
+                <div id="insights-real" class="hidden space-y-4">
+                    <!-- Dominant Color -->
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <div class="flex items-start space-x-3">
+                            <div id="dominant-color-box" class="w-10 h-10 rounded-lg flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-medium">Dominant Mood</h4>
+                                    <span class="text-xs text-slate-400" id="dominant-percentage"></span>
+                                </div>
+                                <p class="text-sm text-slate-400" id="dominant-count"></p>
+                                <p class="text-xs mt-1" id="dominant-insight"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mood Spectrum -->
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <h4 class="font-medium mb-3">Mood Spectrum</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-12">Warm</span>
+                                <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div id="warm-bar" class="h-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-orange-400 w-8" id="warm-count"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-12">Cool</span>
+                                <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div id="cool-bar" class="h-full bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-blue-400 w-8" id="cool-count"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-12">Neutral</span>
+                                <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div id="neutral-bar" class="h-full bg-slate-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-slate-400 w-8" id="neutral-count"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Pattern (if enough data) -->
+                    <div id="weekly-pattern" class="bg-slate-800/50 rounded-xl p-4 hidden">
+                        <h4 class="font-medium mb-3">Weekly Pattern</h4>
+                        <div class="grid grid-cols-7 gap-2" id="weekly-colors">
+                            <!-- Generated by JS -->
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2" id="weekly-insight"></p>
+                    </div>
+
+                    <!-- Recent Notes -->
+                    <div id="notes-section" class="bg-slate-800/50 rounded-xl p-4 hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium">Recent Notes</h4>
+                            <span class="text-xs text-slate-400" id="notes-count"></span>
+                        </div>
+                        <div id="notes-list" class="space-y-2 max-h-48 overflow-y-auto">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Reminder Prompt Banner -->
+    <div id="reminder-prompt" class="hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-40">
+        <div class="glass rounded-2xl p-5 shadow-xl border border-indigo-500/20">
+            <button onclick="dismissReminder()" class="absolute top-3 right-3 p-1 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-400 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="flex items-start space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 pr-4">
+                    <h4 class="font-semibold text-sm mb-1">Want a daily reminder?</h4>
+                    <p class="text-xs text-slate-400 mb-3">Get a gentle nudge at 9pm to log your vibe.</p>
+                    <button onclick="openReminderModal()" class="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all text-sm font-medium">
+                        Set Up Reminder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div id="reminder-modal" class="hidden fixed inset-0 z-50 modal-overlay">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeReminderModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass rounded-2xl p-6 w-full max-w-md relative modal-content">
+                <button onclick="closeReminderModal()" class="absolute top-4 right-4 p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-1">Daily Reminder</h3>
+                    <p class="text-sm text-slate-400">We'll send you a gentle reminder at 9pm daily.</p>
+                </div>
+
+                <!-- Reminder Type Tabs -->
+                <div class="flex space-x-2 mb-4">
+                    <button id="tab-email" onclick="switchReminderTab('email')" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400">
+                        Email
+                    </button>
+                    <button id="tab-sms" onclick="switchReminderTab('sms')" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white">
+                        SMS
+                    </button>
+                </div>
+
+                <!-- Email Form -->
+                <div id="form-email" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                        <input type="email" id="reminder-email" placeholder="you@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500">
+                    </div>
+                </div>
+
+                <!-- SMS Form -->
+                <div id="form-sms" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Phone Number</label>
+                        <input type="tel" id="reminder-phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500">
+                    </div>
+                </div>
+
+                <!-- Time Selection -->
+                <div class="mt-4">
+                    <label class="block text-sm font-medium mb-2">Reminder Time</label>
+                    <select id="reminder-time" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white">
+                        <option value="09:00">9:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                        <option value="21:00" selected>9:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <button onclick="saveReminder()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-semibold">
+                        Enable Reminders
+                    </button>
+                    <p class="text-xs text-slate-500 text-center">You can disable reminders anytime in settings.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Success Toast -->
+    <div id="reminder-success" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 success-toast">
+        <div class="glass rounded-xl px-6 py-4 flex items-center space-x-3 shadow-xl">
+            <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="font-semibold">Reminder set!</p>
+                <p class="text-sm text-slate-400">We'll remind you daily at <span id="reminder-confirm-time">9:00 PM</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 modal-overlay">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass rounded-2xl p-6 w-full max-w-md relative modal-content">
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <h3 class="text-xl font-semibold mb-2">Edit Vibe</h3>
+                <p class="text-slate-400 text-sm mb-6" id="modal-date"></p>
+
+                <div class="grid grid-cols-6 gap-3 mb-6" id="modal-color-palette">
+                    <!-- Colors will be generated by JS -->
+                </div>
+
+                <!-- Notes Section -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">
+                        Add a note <span class="text-slate-500 font-normal">(optional)</span>
+                    </label>
+                    <textarea id="modal-note" placeholder="What made you feel this way today?" rows="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-white placeholder-slate-500 resize-none text-sm"></textarea>
+                    <p class="text-xs text-slate-500 mt-1 text-right"><span id="note-char-count">0</span>/200</p>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="saveModalColor()" id="modal-save-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all font-medium" disabled>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Color palette - 18 colors from red to blue to grey
+        const COLORS = [
+            '#ef4444', // intense red
+            '#f97316', // orange
+            '#f59e0b', // amber
+            '#eab308', // yellow
+            '#84cc16', // lime
+            '#22c55e', // green
+            '#10b981', // emerald
+            '#14b8a6', // teal
+            '#06b6d4', // cyan
+            '#0ea5e9', // sky
+            '#3b82f6', // blue
+            '#6366f1', // indigo
+            '#8b5cf6', // violet
+            '#a855f7', // purple
+            '#d946ef', // fuchsia
+            '#ec4899', // pink
+            '#64748b', // slate
+            '#475569', // heavy grey
+        ];
+
+        // App state
+        let vibeData = {};
+        let notesData = {};
+        let currentMonth = new Date();
+        let selectedColor = null;
+        let modalSelectedColor = null;
+        let editingDate = null;
+
+        // DOM Elements
+        const loadingState = document.getElementById('loading-state');
+        const colorPalette = document.getElementById('color-palette');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const saveBtn = document.getElementById('save-btn');
+        const currentStreakEl = document.getElementById('current-streak');
+        const bestStreakEl = document.getElementById('best-streak');
+        const calendarMonthEl = document.getElementById('calendar-month');
+        const successToast = document.getElementById('success-toast');
+        const errorBanner = document.getElementById('error-banner');
+        const errorMessage = document.getElementById('error-message');
+        const offlineBanner = document.getElementById('offline-banner');
+        const firstTimeState = document.getElementById('first-time-state');
+        const calendarEmptyState = document.getElementById('calendar-empty-state');
+        const todayColorPreview = document.getElementById('today-color-preview');
+        const todayPreviewColor = document.getElementById('today-preview-color');
+        const milestoneMessage = document.getElementById('milestone-message');
+        const milestoneText = document.getElementById('milestone-text');
+        const greetingEl = document.getElementById('greeting');
+        const dateDisplayEl = document.getElementById('date-display');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setGreeting();
+            renderColorPalette();
+            renderCalendar();
+            updateStreaks();
+            checkFirstTimeUser();
+            updateTodayPreview();
+            updateInsights();
+
+            // Simulate loading
+            setTimeout(() => {
+                loadingState.classList.add('hidden');
+                checkReminderPrompt();
+            }, 500);
+
+            // Offline detection
+            window.addEventListener('online', () => offlineBanner.classList.add('hidden'));
+            window.addEventListener('offline', () => offlineBanner.classList.remove('hidden'));
+            if (!navigator.onLine) offlineBanner.classList.remove('hidden');
+        });
+
+        function loadData() {
+            try {
+                const stored = localStorage.getItem('daily-vibes');
+                vibeData = stored ? JSON.parse(stored) : {};
+                const storedNotes = localStorage.getItem('daily-vibes-notes');
+                notesData = storedNotes ? JSON.parse(storedNotes) : {};
+            } catch (e) {
+                vibeData = {};
+                notesData = {};
+                showError('Failed to load data. Starting fresh.');
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('daily-vibes', JSON.stringify(vibeData));
+                localStorage.setItem('daily-vibes-notes', JSON.stringify(notesData));
+                return true;
+            } catch (e) {
+                showError('Failed to save. Please try again.');
+                return false;
+            }
+        }
+
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Good evening';
+            if (hour < 12) greeting = 'Good morning';
+            else if (hour < 17) greeting = 'Good afternoon';
+            greetingEl.textContent = greeting;
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateDisplayEl.textContent = new Date().toLocaleDateString('en-US', options);
+        }
+
+        function getTodayString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getYesterdayString() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return yesterday.toISOString().split('T')[0];
+        }
+
+        function isEditable(dateString) {
+            return dateString === getTodayString() || dateString === getYesterdayString();
+        }
+
+        function isFuture(dateString) {
+            return dateString > getTodayString();
+        }
+
+        function renderColorPalette() {
+            colorPalette.innerHTML = '';
+            COLORS.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = 'color-btn w-10 h-10 sm:w-12 sm:h-12 rounded-xl cursor-pointer';
+                btn.style.backgroundColor = color;
+                btn.onclick = () => selectColor(color, btn);
+                colorPalette.appendChild(btn);
+            });
+        }
+
+        function selectColor(color, btn) {
+            // Deselect previous
+            document.querySelectorAll('#color-palette .color-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedColor = color;
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Today\'s Vibe';
+        }
+
+        function saveToday() {
+            if (!selectedColor) return;
+
+            const today = getTodayString();
+            vibeData[today] = selectedColor;
+
+            if (saveData()) {
+                showSuccess();
+                renderCalendar();
+                updateStreaks();
+                updateTodayPreview();
+                checkFirstTimeUser();
+                updateInsights();
+
+                // Reset selection
+                document.querySelectorAll('#color-palette .color-btn').forEach(b => b.classList.remove('selected'));
+                selectedColor = null;
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Select a color to save';
+            }
+        }
+
+        function updateTodayPreview() {
+            const todayColor = vibeData[getTodayString()];
+            if (todayColor) {
+                todayColorPreview.classList.remove('hidden');
+                todayPreviewColor.style.backgroundColor = todayColor;
+            } else {
+                todayColorPreview.classList.add('hidden');
+            }
+        }
+
+        function showSuccess() {
+            const streak = calculateCurrentStreak();
+            document.getElementById('success-title').textContent = 'Vibe logged!';
+            document.getElementById('success-subtitle').textContent = streak > 1 ? `${streak} day streak 🔥` : 'Keep it going!';
+
+            successToast.classList.remove('hidden');
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorBanner.classList.remove('hidden');
+        }
+
+        function dismissError() {
+            errorBanner.classList.add('hidden');
+        }
+
+        function calculateCurrentStreak() {
+            let streak = 0;
+            const today = new Date();
+            const checkDate = new Date(today);
+
+            while (true) {
+                const dateString = checkDate.toISOString().split('T')[0];
+                if (vibeData[dateString]) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else if (dateString === getTodayString()) {
+                    // Today not logged yet, check if yesterday is
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
+
+        function calculateBestStreak() {
+            const dates = Object.keys(vibeData).sort();
+            if (dates.length === 0) return 0;
+
+            let bestStreak = 1;
+            let currentStreak = 1;
+
+            for (let i = 1; i < dates.length; i++) {
+                const prevDate = new Date(dates[i - 1]);
+                const currDate = new Date(dates[i]);
+                const diffDays = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) {
+                    currentStreak++;
+                    bestStreak = Math.max(bestStreak, currentStreak);
+                } else {
+                    currentStreak = 1;
+                }
+            }
+            return bestStreak;
+        }
+
+        function updateStreaks() {
+            const current = calculateCurrentStreak();
+            const best = Math.max(calculateBestStreak(), current);
+
+            currentStreakEl.textContent = current;
+            bestStreakEl.textContent = best;
+
+            // Check milestones
+            const milestones = [
+                { days: 30, message: '🎉 Incredible! 30 days of self-awareness!' },
+                { days: 14, message: '🚀 Two weeks strong! You\'re building a habit!' },
+                { days: 7, message: '🌟 One week! You\'re on your way!' }
+            ];
+
+            const milestone = milestones.find(m => current >= m.days);
+            if (milestone) {
+                milestoneMessage.classList.remove('hidden');
+                milestoneText.textContent = milestone.message;
+            } else {
+                milestoneMessage.classList.add('hidden');
+            }
+        }
+
+        function checkFirstTimeUser() {
+            const hasData = Object.keys(vibeData).length > 0;
+            firstTimeState.classList.toggle('hidden', hasData);
+        }
+
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            // Update month display
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            calendarMonthEl.textContent = `${monthNames[month]} ${year}`;
+
+            // Get first day of month and total days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            calendarGrid.innerHTML = '';
+
+            // Empty cells for offset
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day empty';
+                calendarGrid.appendChild(empty);
+            }
+
+            // Day cells
+            let hasAnyLogs = false;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const color = vibeData[dateString];
+                const hasNote = notesData[dateString];
+                const isToday = dateString === getTodayString();
+                const isFutureDate = isFuture(dateString);
+
+                const cell = document.createElement('div');
+                cell.className = `calendar-day aspect-square rounded-xl flex items-center justify-center cursor-pointer text-sm font-medium relative ${isToday ? 'today ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''} ${isFutureDate ? 'future opacity-30 cursor-not-allowed' : ''}`;
+
+                if (color) {
+                    cell.style.backgroundColor = color;
+                    hasAnyLogs = true;
+
+                    // Note indicator
+                    if (hasNote) {
+                        const noteIndicator = document.createElement('div');
+                        noteIndicator.className = 'absolute bottom-1 right-1 w-2 h-2 bg-white rounded-full opacity-80';
+                        noteIndicator.title = 'Has note';
+                        cell.appendChild(noteIndicator);
+                    }
+                } else {
+                    cell.className += ' bg-slate-700/50';
+                    cell.textContent = day;
+                }
+
+                cell.onclick = () => handleDayClick(dateString, day);
+                calendarGrid.appendChild(cell);
+            }
+
+            // Show/hide empty state
+            const currentMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthHasLogs = Object.keys(vibeData).some(d => d.startsWith(currentMonthKey));
+            calendarEmptyState.classList.toggle('hidden', monthHasLogs || Object.keys(vibeData).length > 0);
+        }
+
+        function handleDayClick(dateString, day) {
+            if (isFuture(dateString)) {
+                showError('Cannot log future days');
+                return;
+            }
+
+            if (!isEditable(dateString)) {
+                showError('You can only edit today or yesterday');
+                return;
+            }
+
+            openEditModal(dateString, day);
+        }
+
+        function openEditModal(dateString, day) {
+            editingDate = dateString;
+            modalSelectedColor = vibeData[dateString] || null;
+
+            const date = new Date(dateString + 'T00:00:00');
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('modal-date').textContent = date.toLocaleDateString('en-US', options);
+
+            // Render modal color palette
+            const modalPalette = document.getElementById('modal-color-palette');
+            modalPalette.innerHTML = '';
+            COLORS.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = `color-btn w-10 h-10 rounded-xl cursor-pointer ${color === modalSelectedColor ? 'selected' : ''}`;
+                btn.style.backgroundColor = color;
+                btn.onclick = () => selectModalColor(color, btn);
+                modalPalette.appendChild(btn);
+            });
+
+            // Load existing note
+            const noteInput = document.getElementById('modal-note');
+            const existingNote = notesData[dateString] || '';
+            noteInput.value = existingNote;
+            document.getElementById('note-char-count').textContent = existingNote.length;
+
+            // Character counter
+            noteInput.oninput = () => {
+                document.getElementById('note-char-count').textContent = noteInput.value.length;
+            };
+
+            document.getElementById('modal-save-btn').disabled = !modalSelectedColor;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function selectModalColor(color, btn) {
+            document.querySelectorAll('#modal-color-palette .color-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            modalSelectedColor = color;
+            document.getElementById('modal-save-btn').disabled = false;
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            editingDate = null;
+            modalSelectedColor = null;
+        }
+
+        function saveModalColor() {
+            if (!editingDate || !modalSelectedColor) return;
+
+            vibeData[editingDate] = modalSelectedColor;
+
+            // Save note
+            const noteValue = document.getElementById('modal-note').value.trim();
+            if (noteValue) {
+                notesData[editingDate] = noteValue;
+            } else {
+                delete notesData[editingDate];
+            }
+
+            if (saveData()) {
+                closeModal();
+                renderCalendar();
+                updateStreaks();
+                updateTodayPreview();
+                updateInsights();
+
+                document.getElementById('success-title').textContent = 'Vibe updated!';
+                document.getElementById('success-subtitle').textContent = noteValue ? 'Note saved' : '';
+                successToast.classList.remove('hidden');
+                setTimeout(() => successToast.classList.add('hidden'), 3000);
+            }
+        }
+
+        function prevMonth() {
+            currentMonth.setMonth(currentMonth.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function scrollToDemo() {
+            document.getElementById('demo-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Color insights mapping
+        const COLOR_INSIGHTS = {
+            '#ef4444': { name: 'Red', category: 'warm', meaning: 'Passion, energy, or intensity. You may be feeling driven or emotional.' },
+            '#f97316': { name: 'Orange', category: 'warm', meaning: 'Enthusiasm and creativity. A sign of optimism and social energy.' },
+            '#f59e0b': { name: 'Amber', category: 'warm', meaning: 'Warmth and confidence. You\'re likely feeling grounded yet energetic.' },
+            '#eab308': { name: 'Yellow', category: 'warm', meaning: 'Joy and mental clarity. A bright mood indicating positivity.' },
+            '#84cc16': { name: 'Lime', category: 'warm', meaning: 'Fresh energy and growth. You may be embracing new beginnings.' },
+            '#22c55e': { name: 'Green', category: 'cool', meaning: 'Balance and harmony. A sign of feeling centered and at peace.' },
+            '#10b981': { name: 'Emerald', category: 'cool', meaning: 'Renewal and prosperity. You\'re likely feeling successful or hopeful.' },
+            '#14b8a6': { name: 'Teal', category: 'cool', meaning: 'Clarity and calm. A sophisticated emotional state.' },
+            '#06b6d4': { name: 'Cyan', category: 'cool', meaning: 'Open communication. You may be feeling expressive and clear.' },
+            '#0ea5e9': { name: 'Sky', category: 'cool', meaning: 'Freedom and peace. A light, unburdened emotional state.' },
+            '#3b82f6': { name: 'Blue', category: 'cool', meaning: 'Trust and stability. You\'re likely feeling reliable and calm.' },
+            '#6366f1': { name: 'Indigo', category: 'cool', meaning: 'Intuition and depth. A sign of introspection and wisdom.' },
+            '#8b5cf6': { name: 'Violet', category: 'cool', meaning: 'Creativity and spirituality. You may be feeling inspired.' },
+            '#a855f7': { name: 'Purple', category: 'cool', meaning: 'Imagination and luxury. A rich, contemplative mood.' },
+            '#d946ef': { name: 'Fuchsia', category: 'warm', meaning: 'Boldness and confidence. You\'re feeling expressive and unique.' },
+            '#ec4899': { name: 'Pink', category: 'warm', meaning: 'Love and compassion. A nurturing, caring emotional state.' },
+            '#64748b': { name: 'Slate', category: 'neutral', meaning: 'Balance and neutrality. You may be in a thoughtful, measured state.' },
+            '#475569': { name: 'Grey', category: 'neutral', meaning: 'Calm detachment. A practical, unemotional perspective.' },
+        };
+
+        function updateInsights() {
+            const dataCount = Object.keys(vibeData).length;
+            const insightsEmpty = document.getElementById('insights-empty');
+            const insightsReal = document.getElementById('insights-real');
+
+            // Update progress dots
+            const progressDots = insightsEmpty.querySelectorAll('.progress-dot');
+            progressDots.forEach((dot, i) => {
+                if (i < dataCount) {
+                    dot.classList.remove('bg-slate-600');
+                    dot.classList.add('bg-indigo-500');
+                } else {
+                    dot.classList.remove('bg-indigo-500');
+                    dot.classList.add('bg-slate-600');
+                }
+            });
+            insightsEmpty.querySelector('span').textContent = `${Math.min(dataCount, 7)} of 7 days`;
+
+            if (dataCount < 7) {
+                insightsEmpty.classList.remove('hidden');
+                insightsReal.classList.add('hidden');
+                return;
+            }
+
+            // Show real insights
+            insightsEmpty.classList.add('hidden');
+            insightsReal.classList.remove('hidden');
+
+            // Calculate color frequencies
+            const colorCounts = {};
+            Object.values(vibeData).forEach(color => {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+            });
+
+            // Find dominant color
+            const dominantColor = Object.entries(colorCounts).sort((a, b) => b[1] - a[1])[0];
+            const colorInfo = COLOR_INSIGHTS[dominantColor[0]] || { name: 'Unknown', meaning: 'A unique choice!' };
+
+            document.getElementById('dominant-color-box').style.backgroundColor = dominantColor[0];
+            document.getElementById('dominant-percentage').textContent = `${Math.round(dominantColor[1] / dataCount * 100)}% of days`;
+            document.getElementById('dominant-count').textContent = `${colorInfo.name} appeared ${dominantColor[1]} times`;
+            document.getElementById('dominant-insight').textContent = `💡 ${colorInfo.meaning}`;
+            document.getElementById('dominant-insight').className = `text-xs mt-1 text-${colorInfo.category === 'warm' ? 'orange' : colorInfo.category === 'cool' ? 'blue' : 'slate'}-400`;
+
+            // Calculate spectrum
+            let warm = 0, cool = 0, neutral = 0;
+            Object.values(vibeData).forEach(color => {
+                const info = COLOR_INSIGHTS[color];
+                if (info) {
+                    if (info.category === 'warm') warm++;
+                    else if (info.category === 'cool') cool++;
+                    else neutral++;
+                }
+            });
+
+            const total = warm + cool + neutral;
+            document.getElementById('warm-bar').style.width = `${(warm / total) * 100}%`;
+            document.getElementById('cool-bar').style.width = `${(cool / total) * 100}%`;
+            document.getElementById('neutral-bar').style.width = `${(neutral / total) * 100}%`;
+            document.getElementById('warm-count').textContent = warm;
+            document.getElementById('cool-count').textContent = cool;
+            document.getElementById('neutral-count').textContent = neutral;
+
+            // Weekly pattern (need at least 14 days)
+            if (dataCount >= 14) {
+                document.getElementById('weekly-pattern').classList.remove('hidden');
+                const weeklyColors = document.getElementById('weekly-colors');
+                weeklyColors.innerHTML = '';
+
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayColorCounts = [{}, {}, {}, {}, {}, {}, {}];
+
+                Object.entries(vibeData).forEach(([dateStr, color]) => {
+                    const date = new Date(dateStr + 'T00:00:00');
+                    const day = date.getDay();
+                    dayColorCounts[day][color] = (dayColorCounts[day][color] || 0) + 1;
+                });
+
+                dayNames.forEach((name, i) => {
+                    const colors = dayColorCounts[i];
+                    const topColor = Object.entries(colors).sort((a, b) => b[1] - a[1])[0];
+
+                    const div = document.createElement('div');
+                    div.className = 'text-center';
+                    div.innerHTML = `
+                        <div class="w-8 h-8 rounded-lg mx-auto mb-1" style="background-color: ${topColor ? topColor[0] : '#475569'}"></div>
+                        <span class="text-xs text-slate-500">${name}</span>
+                    `;
+                    weeklyColors.appendChild(div);
+                });
+
+                // Generate weekly insight
+                const warmDays = dayColorCounts.map((colors, i) => {
+                    const warmCount = Object.entries(colors).filter(([c]) => COLOR_INSIGHTS[c]?.category === 'warm').reduce((sum, [, count]) => sum + count, 0);
+                    return { day: dayNames[i], warm: warmCount };
+                }).sort((a, b) => b.warm - a.warm);
+
+                if (warmDays[0].warm > 0) {
+                    document.getElementById('weekly-insight').textContent = `Your warmest days tend to be ${warmDays[0].day}s. Notice any patterns?`;
+                }
+            }
+
+            // Notes section
+            const notesEntries = Object.entries(notesData).sort((a, b) => b[0].localeCompare(a[0]));
+            if (notesEntries.length > 0) {
+                document.getElementById('notes-section').classList.remove('hidden');
+                document.getElementById('notes-count').textContent = `${notesEntries.length} note${notesEntries.length > 1 ? 's' : ''}`;
+
+                const notesList = document.getElementById('notes-list');
+                notesList.innerHTML = '';
+
+                // Show last 5 notes
+                notesEntries.slice(0, 5).forEach(([dateStr, note]) => {
+                    const color = vibeData[dateStr] || '#475569';
+                    const colorInfo = COLOR_INSIGHTS[color] || { name: 'Unknown' };
+                    const date = new Date(dateStr + 'T00:00:00');
+                    const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'flex items-start space-x-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors';
+                    noteEl.innerHTML = `
+                        <div class="w-6 h-6 rounded-md flex-shrink-0 mt-0.5" style="background-color: ${color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-medium text-slate-300">${dateLabel}</span>
+                                <span class="text-xs text-slate-500">${colorInfo.name}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 line-clamp-2">${note}</p>
+                        </div>
+                    `;
+                    notesList.appendChild(noteEl);
+                });
+            } else {
+                document.getElementById('notes-section').classList.add('hidden');
+            }
+        }
+
+        function renderDemoCalendar() {
+            // No longer needed - insights are dynamic now
+        }
+
+        // Reminder functions
+        let currentReminderTab = 'email';
+
+        function checkReminderPrompt() {
+            const reminderData = localStorage.getItem('vibe-reminder');
+            const reminderDismissed = localStorage.getItem('vibe-reminder-dismissed');
+
+            // Show prompt if: no reminder set, not dismissed, and user has logged at least once
+            if (!reminderData && !reminderDismissed && Object.keys(vibeData).length >= 1) {
+                // Show after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('reminder-prompt').classList.remove('hidden');
+                }, 2000);
+            }
+        }
+
+        function dismissReminder() {
+            document.getElementById('reminder-prompt').classList.add('hidden');
+            localStorage.setItem('vibe-reminder-dismissed', 'true');
+        }
+
+        function openReminderModal() {
+            document.getElementById('reminder-prompt').classList.add('hidden');
+            document.getElementById('reminder-modal').classList.remove('hidden');
+        }
+
+        function closeReminderModal() {
+            document.getElementById('reminder-modal').classList.add('hidden');
+        }
+
+        function switchReminderTab(tab) {
+            currentReminderTab = tab;
+
+            // Update tab styles
+            document.getElementById('tab-email').className = tab === 'email'
+                ? 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400'
+                : 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white';
+            document.getElementById('tab-sms').className = tab === 'sms'
+                ? 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-indigo-500/20 text-indigo-400'
+                : 'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all bg-slate-700/50 text-slate-400 hover:text-white';
+
+            // Show/hide forms
+            document.getElementById('form-email').classList.toggle('hidden', tab !== 'email');
+            document.getElementById('form-sms').classList.toggle('hidden', tab !== 'sms');
+        }
+
+        function saveReminder() {
+            const time = document.getElementById('reminder-time').value;
+            const timeLabel = document.getElementById('reminder-time').options[document.getElementById('reminder-time').selectedIndex].text;
+
+            let contact = '';
+            if (currentReminderTab === 'email') {
+                contact = document.getElementById('reminder-email').value.trim();
+                if (!contact || !contact.includes('@')) {
+                    showError('Please enter a valid email address');
+                    return;
+                }
+            } else {
+                contact = document.getElementById('reminder-phone').value.trim();
+                if (!contact || contact.length < 10) {
+                    showError('Please enter a valid phone number');
+                    return;
+                }
+            }
+
+            // Save reminder data
+            const reminderData = {
+                type: currentReminderTab,
+                contact: contact,
+                time: time,
+                timeLabel: timeLabel,
+                createdAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('vibe-reminder', JSON.stringify(reminderData));
+            localStorage.removeItem('vibe-reminder-dismissed');
+
+            // Close modal and show success
+            closeReminderModal();
+
+            document.getElementById('reminder-confirm-time').textContent = timeLabel;
+            document.getElementById('reminder-success').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('reminder-success').classList.add('hidden');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

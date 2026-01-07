@@ -1,0 +1,12 @@
+{
+  "name": "daily-vibe-check",
+  "version": "1.0.0",
+  "description": "Emotional tracking app where users pick one color per day to represent their mood",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "start": "npx serve . -p 3000",
+    "preview": "npx serve . -p 3000"
+  },
+  "keywords": ["mood", "tracker", "vibe", "colors"],
+  "license": "MIT"
+}
